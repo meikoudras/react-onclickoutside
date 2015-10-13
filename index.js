@@ -32,6 +32,7 @@
   // objects as keys, they get toString-coerced
   var registeredComponents = [];
   var handlers = [];
+  var outsideHandlers = [];
 
   var IGNORE_CLASS = 'ignore-react-onclickoutside';
 
@@ -56,7 +57,7 @@
       if(typeof this.handleClickOutside !== "function")
         throw new Error("Component lacks a handleClickOutside(event) function for processing outside click events.");
 
-      var fn = this.__outsideClickHandler = (function(localNode, eventHandler) {
+      var fn = this.__outsideClickHandler = (function() {
         return function(evt) {
           if (evt.stopImmediatePropagation) {
             evt.stopImmediatePropagation();
@@ -65,23 +66,35 @@
           }
           var source = evt.target;
           var found = false;
+
           // If source=local then this event came from "somewhere"
           // inside and should be ignored. We could handle this with
           // a layered approach, too, but that requires going back to
           // thinking in terms of Dom node nesting, running counter
           // to React's "you shouldn't care about the DOM" philosophy.
-          while(source.parentNode) {
-            found = isSourceFound(source, localNode);
-            if(found) return;
-            source = source.parentNode;
-          }
-          eventHandler(evt);
-        }
-      }(React.findDOMNode(this), this.handleClickOutside));
 
+          for(var i=0;i<registeredComponents.length;i++) {
+            var localNode = React.findDOMNode(registeredComponents[i]);
+            var handler = outsideHandlers[i];
+            source = evt.target;
+            found = false;
+
+            while(source.parentNode) {
+              found = isSourceFound(source, localNode);
+              if(found) break;
+              source = source.parentNode;
+            }
+
+            if(!found) {
+              handler(evt);
+            }
+          }
+        };
+      }());
       var pos = registeredComponents.length;
       registeredComponents.push(this);
       handlers[pos] = fn;
+      outsideHandlers[pos] = this.handleClickOutside;
 
       // If there is a truthy disableOnClickOutside property for this
       // component, don't immediately start listening for outside events.
