@@ -15,17 +15,17 @@
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
-    define(['react'], factory);
+    define(['react-dom'], factory);
   } else if (typeof exports === 'object') {
     // Node. Note that this does not work with strict
     // CommonJS, but only CommonJS-like environments
     // that support module.exports
-    module.exports = factory(require('react'));
+    module.exports = factory(require('react-dom'));
   } else {
     // Browser globals (root is window)
-    root.OnClickOutside = factory(React);
+    root.OnClickOutside = factory(ReactDOM);
   }
-}(this, function (React) {
+}(this, function (ReactDOM) {
   "use strict";
 
   // Use a parallel array because we can't use
@@ -74,7 +74,7 @@
           // to React's "you shouldn't care about the DOM" philosophy.
 
           for(var i=0;i<registeredComponents.length;i++) {
-            var localNode = React.findDOMNode(registeredComponents[i]);
+            var localNode = ReactDOM.findDOMNode(registeredComponents[i]);
             var handler = outsideHandlers[i];
             source = evt.target;
             found = false;
